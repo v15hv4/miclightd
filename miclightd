@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-adapted from https://github.com/Dzeri96/Micmute-LED-Pulseaudio-Service
+adapted from: https://github.com/Dzeri96/Micmute-LED-Pulseaudio-Service
 """
 
 import os
@@ -15,11 +15,11 @@ INVERT = True  # invert LED behavior (muted: off, unmuted: on)
 LED_MAPPING = "/sys/class/leds/platform::micmute/brightness"
 
 # instantiate logger
-logger = logging.getLogger("miclight")
+logger = logging.getLogger("miclightd")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 # instantiate client
-pulse = pulsectl.Pulse("miclight")
+pulse = pulsectl.Pulse("miclightd")
 
 # global variable to track pulse events
 pulse_event: pulsectl.PulseEventInfo

@@ -1,5 +1,5 @@
 [Unit]
-Description=Mic Light Controller
+Description=miclightd
 After=sound.target
 
 [Service]
