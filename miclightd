@@ -11,7 +11,7 @@ import logging
 import pulsectl
 
 # config
-INVERT = True # invert LED behavior (muted: off, unmuted: on)
+INVERT = True  # invert LED behavior (muted: off, unmuted: on)
 LED_MAPPING = "/sys/class/leds/platform::micmute/brightness"
 
 # instantiate logger
@@ -24,11 +24,13 @@ pulse = pulsectl.Pulse("miclight")
 # global variable to track pulse events
 pulse_event: pulsectl.PulseEventInfo
 
+
 def catch_events(e: pulsectl.PulseEventInfo) -> None:
     global pulse_event
     logger.debug(f"Received Pulse event: {e}")
     pulse_event = e
     raise pulsectl.PulseLoopStop
+
 
 def update_led(value: bool) -> None:
     if INVERT:
@@ -36,6 +38,7 @@ def update_led(value: bool) -> None:
     with open(LED_MAPPING, "w") as f:
         f.write("0" if value else "1")
     logger.debug(f"Wrote LED status ({value})")
+
 
 def start() -> int:
     logger.info("Starting...")
@@ -45,13 +48,13 @@ def start() -> int:
     active_index = -1
     logger.debug(f"Available sources: {pulse.source_list()}")
     for source in pulse.source_list():
-        if source.name == pulse.server_info().default_source_name: # type: ignore
+        if source.name == pulse.server_info().default_source_name:  # type: ignore
             active_index = source.index
 
     if active_index == -1:
         raise RuntimeError(f"Unable to find mic!")
 
-    led_value = not pulse.source_info(active_index).mute # type: ignore
+    led_value = not pulse.source_info(active_index).mute  # type: ignore
     update_led(led_value)
 
     pulse.event_mask_set("all")
@@ -59,10 +62,12 @@ def start() -> int:
 
     return active_index
 
+
 def stop(*_) -> None:
     logger.info("Stopping...")
     pulse.disconnect()
     sys.exit(0)
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, stop)
@@ -76,6 +81,6 @@ if __name__ == "__main__":
             logger.warning("Disconnected! Attempting to reconnect...")
             active_index = start()
 
-        if pulse_event.index == active_index: # type: ignore 
-            led_value = not pulse.source_info(active_index).mute # type: ignore
+        if pulse_event.index == active_index:  # type: ignore
+            led_value = not pulse.source_info(active_index).mute  # type: ignore
             update_led(led_value)

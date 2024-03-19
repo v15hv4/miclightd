@@ -1,0 +1,12 @@
+[Unit]
+Description=Mic Light Controller
+After=sound.target
+
+[Service]
+ExecStart=/usr/bin/env python3 "%h/.local/bin/miclightd"
+Restart=on-failure
+Environment=PYTHONUNBUFFERED=1
+Environment=LOGLEVEL=INFO
+
+[Install]
+WantedBy=default.target
