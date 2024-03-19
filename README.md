@@ -1,10 +1,12 @@
 # miclightd
-
 A PulseAudio-powered daemon to control hardware mic mute LEDs.
+
+## Dependencies
+Install [pulsectl](https://pypi.org/project/pulsectl/) through pip or your system package manager.
 
 ## Installation
 ```
-wget https://raw.githubusercontent.com/v15hv4/miclightd/install.sh -O - | sh
+wget https://raw.githubusercontent.com/v15hv4/miclightd/master/install.sh -O - | sh
 ```
 
 ## Usage
