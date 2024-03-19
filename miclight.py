@@ -11,41 +11,45 @@ import logging
 import pulsectl
 
 # config
-# TODO: read from subprocess (`pactl get-default-source`)
-mic_name = "alsa_input.pci-0000_04_00.6.HiFi__hw_acp__source"
-led_mapping = "/sys/class/leds/platform::micmute/brightness"
+INVERT = True # invert LED behavior (muted: off, unmuted: on)
+LED_MAPPING = "/sys/class/leds/platform::micmute/brightness"
+
+# instantiate logger
+logger = logging.getLogger("miclight")
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 # instantiate client
 pulse = pulsectl.Pulse("miclight")
 
 # global variable to track pulse events
-pulse_event = None # : pulsectl.PulseEventInfo
+pulse_event: pulsectl.PulseEventInfo
 
-def catch_events(e) -> None:
+def catch_events(e: pulsectl.PulseEventInfo) -> None:
     global pulse_event
-    logging.debug(f"Received Pulse event: {e}")
+    logger.debug(f"Received Pulse event: {e}")
     pulse_event = e
     raise pulsectl.PulseLoopStop
 
 def update_led(value: bool) -> None:
-    print("on" if value else "off")
-    with open(led_mapping, "w") as f:
-        f.write("1" if value else "0")
-    logging.debug("Wrote to mapping")
+    if INVERT:
+        value = not value
+    with open(LED_MAPPING, "w") as f:
+        f.write("0" if value else "1")
+    logger.debug(f"Wrote LED status ({value})")
 
 def start() -> int:
-    logging.info("Starting...")
+    logger.info("Starting...")
     pulse.connect(wait=True)
-    logging.info("Connected!")
+    logger.info("Connected!")
 
     active_index = -1
-    logging.debug("Available sources:", pulse.source_list())
+    logger.debug(f"Available sources: {pulse.source_list()}")
     for source in pulse.source_list():
-        if source.name == mic_name:
+        if source.name == pulse.server_info().default_source_name: # type: ignore
             active_index = source.index
 
     if active_index == -1:
-        raise RuntimeError(f"Unable to find mic: {mic_name}")
+        raise RuntimeError(f"Unable to find mic!")
 
     led_value = not pulse.source_info(active_index).mute # type: ignore
     update_led(led_value)
@@ -56,7 +60,7 @@ def start() -> int:
     return active_index
 
 def stop(*_) -> None:
-    logging.info("Stopping...")
+    logger.info("Stopping...")
     pulse.disconnect()
     sys.exit(0)
 
@@ -69,8 +73,9 @@ if __name__ == "__main__":
             pulse.event_listen()
         except pulsectl.pulsectl.PulseDisconnected:
             # TODO: better reconnection
-            logging.warning("Disconnected! Attempting to reconnect...")
+            logger.warning("Disconnected! Attempting to reconnect...")
             active_index = start()
+
         if pulse_event.index == active_index: # type: ignore 
             led_value = not pulse.source_info(active_index).mute # type: ignore
             update_led(led_value)
